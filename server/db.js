@@ -169,6 +169,14 @@ CREATE TABLE IF NOT EXISTS counters (
     value INTEGER DEFAULT 0
 );
 
+-- Settings table for company info and preferences
+CREATE TABLE IF NOT EXISTS settings (
+    key VARCHAR(100) PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES users(id)
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory(status);
 CREATE INDEX IF NOT EXISTS idx_inventory_serial ON inventory(serial);

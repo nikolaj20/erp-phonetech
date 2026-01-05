@@ -197,13 +197,6 @@
                     Audit Log
                 </button>
                 
-                <button onclick="App.navigate('backup')" data-nav="backup" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all text-left">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                    </svg>
-                    Backup & Restore
-                </button>
-                
                 <button onclick="App.navigate('parts-inventory')" data-nav="parts-inventory" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all text-left">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
@@ -2290,6 +2283,90 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                     </svg>
                                     Add Selected Parts to Inventory
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Users Management View (Master Admin Only) -->
+            <div id="view-users" class="view hidden">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-800">User Management</h2>
+                        <p class="text-slate-500 mt-1">Manage system users and their access</p>
+                    </div>
+                    <button onclick="UsersUI.showAddUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add User
+                    </button>
+                </div>
+                
+                <!-- Users Table -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="text-left px-6 py-4 text-sm font-semibold text-slate-600">User</th>
+                                <th class="text-left px-6 py-4 text-sm font-semibold text-slate-600">Username</th>
+                                <th class="text-left px-6 py-4 text-sm font-semibold text-slate-600">Role</th>
+                                <th class="text-left px-6 py-4 text-sm font-semibold text-slate-600">Last Login</th>
+                                <th class="text-left px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
+                                <th class="text-right px-6 py-4 text-sm font-semibold text-slate-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="6" class="text-center py-12 text-slate-400">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add/Edit User Modal Template -->
+            <template id="add-user-modal-template">
+                <div class="modal-backdrop fixed inset-0 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+                        <div class="p-6 border-b border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-800" id="user-modal-title">Add New User</h3>
+                        </div>
+                        <form id="user-form" onsubmit="UsersUI.handleSaveUser(event)" class="p-6 space-y-4">
+                            <input type="hidden" id="user-edit-id" value="">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+                                <input type="text" id="user-name" required placeholder="Full name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Username *</label>
+                                <input type="text" id="user-username" required placeholder="Username for login" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Password <span id="password-hint">(required)</span></label>
+                                <input type="password" id="user-password" placeholder="Password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Role *</label>
+                                <select id="user-role" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="admin">Admin</option>
+                                    <option value="master_admin">Master Admin</option>
+                                </select>
+                            </div>
+                            <div id="user-active-field" class="hidden">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="user-active" checked class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-slate-700">Account Active</span>
+                                </label>
+                            </div>
+                            <div class="flex gap-3 pt-4">
+                                <button type="button" onclick="Modal.close()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-lg transition-all">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                                    Save User
                                 </button>
                             </div>
                         </form>
@@ -6547,6 +6624,379 @@
         // Update trade-in counter
         const pending = TradeInService.getPending();
         document.getElementById('tradein-requests-count').textContent = pending.length;
+    };
+
+    // ============================================
+    // USERS MANAGEMENT UI (Master Admin Only)
+    // ============================================
+    const UsersUI = {
+        currentEditUser: null,
+        
+        async render() {
+            // Only show for master_admin
+            const userInfo = JSON.parse(sessionStorage.getItem('user_info') || '{}');
+            if (userInfo.role !== 'master_admin') {
+                Toast.warning('Access denied. Master Admin required.');
+                App.navigate('dashboard');
+                return;
+            }
+            
+            await this.loadUsers();
+            this.updateUsersCount();
+        },
+        
+        async loadUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400">Loading users...</td></tr>';
+            
+            try {
+                const users = await ApiService.get('/api/auth/users');
+                if (!users || users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400">No users found</td></tr>';
+                    return;
+                }
+                
+                this.renderUsersTable(users);
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-red-400">Failed to load users: ' + error.message + '</td></tr>';
+            }
+        },
+        
+        renderUsersTable(users) {
+            const tbody = document.getElementById('users-table-body');
+            const currentUserId = JSON.parse(sessionStorage.getItem('user_info') || '{}').id;
+            
+            tbody.innerHTML = users.map(user => {
+                const roleColors = { master_admin: 'red', admin: 'blue' };
+                const statusColors = { active: 'green', inactive: 'slate' };
+                const isCurrentUser = user.id === currentUserId;
+                
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                    ${(user.name || user.username).charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-medium text-slate-800">${user.name || user.username}</p>
+                                    ${isCurrentUser ? '<span class="text-xs text-blue-600">(You)</span>' : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 font-mono text-sm text-slate-600">${user.username}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded text-xs font-medium bg-${roleColors[user.role] || 'slate'}-100 text-${roleColors[user.role] || 'slate'}-700">
+                                ${user.role === 'master_admin' ? 'Master Admin' : 'Admin'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500">
+                            ${user.last_login ? Utils.formatDate(user.last_login, true) : 'Never'}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded text-xs font-medium bg-${statusColors[user.is_active ? 'active' : 'inactive']}-100 text-${statusColors[user.is_active ? 'active' : 'inactive']}-700">
+                                ${user.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="UsersUI.showEditUserModal('${user.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                                ${!isCurrentUser ? `<button onclick="UsersUI.deleteUser('${user.id}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        },
+        
+        updateUsersCount() {
+            // Update the badge count if needed
+        },
+        
+        showAddUserModal() {
+            this.currentEditUser = null;
+            Modal.show('add-user-modal-template');
+            
+            document.getElementById('user-modal-title').textContent = 'Add New User';
+            document.getElementById('user-edit-id').value = '';
+            document.getElementById('user-name').value = '';
+            document.getElementById('user-username').value = '';
+            document.getElementById('user-password').value = '';
+            document.getElementById('user-password').required = true;
+            document.getElementById('password-hint').textContent = '(required)';
+            document.getElementById('user-role').value = 'admin';
+            document.getElementById('user-active-field').classList.add('hidden');
+        },
+        
+        async showEditUserModal(userId) {
+            try {
+                const users = await ApiService.get('/api/auth/users');
+                const user = users.find(u => u.id.toString() === userId.toString());
+                
+                if (!user) {
+                    Toast.error('User not found');
+                    return;
+                }
+                
+                this.currentEditUser = user;
+                Modal.show('add-user-modal-template');
+                
+                document.getElementById('user-modal-title').textContent = 'Edit User';
+                document.getElementById('user-edit-id').value = user.id;
+                document.getElementById('user-name').value = user.name || '';
+                document.getElementById('user-username').value = user.username;
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-password').required = false;
+                document.getElementById('password-hint').textContent = '(leave blank to keep current)';
+                document.getElementById('user-role').value = user.role;
+                document.getElementById('user-active-field').classList.remove('hidden');
+                document.getElementById('user-active').checked = user.is_active;
+            } catch (error) {
+                Toast.error('Failed to load user: ' + error.message);
+            }
+        },
+        
+        async handleSaveUser(event) {
+            event.preventDefault();
+            
+            const userId = document.getElementById('user-edit-id').value;
+            const isEdit = !!userId;
+            
+            const userData = {
+                name: document.getElementById('user-name').value.trim(),
+                username: document.getElementById('user-username').value.trim(),
+                role: document.getElementById('user-role').value
+            };
+            
+            const password = document.getElementById('user-password').value;
+            if (password) {
+                userData.password = password;
+            } else if (!isEdit) {
+                Toast.error('Password is required for new users');
+                return;
+            }
+            
+            if (isEdit) {
+                userData.is_active = document.getElementById('user-active').checked;
+            }
+            
+            try {
+                if (isEdit) {
+                    await ApiService.put(`/api/auth/users/${userId}`, userData);
+                    Toast.success('User updated successfully');
+                } else {
+                    await ApiService.post('/api/auth/users', userData);
+                    Toast.success('User created successfully');
+                }
+                
+                Modal.close();
+                this.currentEditUser = null;
+                await this.loadUsers();
+            } catch (error) {
+                Toast.error('Failed to save user: ' + error.message);
+            }
+        },
+        
+        async deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                await ApiService.delete(`/api/auth/users/${userId}`);
+                Toast.success('User deleted successfully');
+                await this.loadUsers();
+            } catch (error) {
+                Toast.error('Failed to delete user: ' + error.message);
+            }
+        }
+    };
+
+    // ============================================
+    // SETTINGS UI
+    // ============================================
+    const SettingsUI = {
+        async render() {
+            await this.loadSettings();
+        },
+        
+        async loadSettings() {
+            try {
+                const settings = await ApiService.get('/api/settings');
+                if (settings) {
+                    document.getElementById('settings-company-email').value = settings.company_email || '';
+                    document.getElementById('settings-company-name').value = settings.company_name || '';
+                    document.getElementById('settings-company-phone').value = settings.company_phone || '';
+                    document.getElementById('settings-company-address').value = settings.company_address || '';
+                    document.getElementById('settings-notify-tradein').checked = settings.notify_tradein_quote !== false;
+                    document.getElementById('settings-notify-repair').checked = settings.notify_repair_status !== false;
+                    document.getElementById('settings-notify-ready').checked = settings.notify_ready_pickup !== false;
+                }
+            } catch (error) {
+                console.warn('Failed to load settings:', error);
+            }
+        },
+        
+        async saveEmailSettings(event) {
+            event.preventDefault();
+            
+            try {
+                await ApiService.put('/api/settings', {
+                    company_email: document.getElementById('settings-company-email').value.trim(),
+                    company_name: document.getElementById('settings-company-name').value.trim(),
+                    company_phone: document.getElementById('settings-company-phone').value.trim(),
+                    company_address: document.getElementById('settings-company-address').value.trim()
+                });
+                Toast.success('Email settings saved');
+            } catch (error) {
+                Toast.error('Failed to save settings: ' + error.message);
+            }
+        },
+        
+        async saveNotificationSettings() {
+            try {
+                await ApiService.put('/api/settings', {
+                    notify_tradein_quote: document.getElementById('settings-notify-tradein').checked,
+                    notify_repair_status: document.getElementById('settings-notify-repair').checked,
+                    notify_ready_pickup: document.getElementById('settings-notify-ready').checked
+                });
+                Toast.success('Notification settings saved');
+            } catch (error) {
+                Toast.error('Failed to save settings: ' + error.message);
+            }
+        },
+        
+        async changePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('settings-current-password').value;
+            const newPassword = document.getElementById('settings-new-password').value;
+            const confirmPassword = document.getElementById('settings-confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                Toast.error('New passwords do not match');
+                return;
+            }
+            
+            if (newPassword.length < 4) {
+                Toast.error('Password must be at least 4 characters');
+                return;
+            }
+            
+            try {
+                await ApiService.post('/api/auth/change-password', {
+                    current_password: currentPassword,
+                    new_password: newPassword
+                });
+                Toast.success('Password changed successfully');
+                document.getElementById('password-change-form').reset();
+            } catch (error) {
+                Toast.error('Failed to change password: ' + error.message);
+            }
+        },
+        
+        previewEmailTemplate(templateType) {
+            Modal.show('email-preview-modal-template');
+            
+            const templates = {
+                tradein_quote: {
+                    subject: 'Your Trade-In Quote - {company_name}',
+                    body: `
+                        <h2>Trade-In Quote</h2>
+                        <p>Dear {customer_name},</p>
+                        <p>Thank you for your trade-in request for your <strong>{device_model}</strong>.</p>
+                        <p>Based on the information provided, we're pleased to offer you:</p>
+                        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h3 style="color: #16a34a; margin: 0;">€{offer_amount}</h3>
+                        </div>
+                        <p>To proceed with this offer, please bring your device to our store or ship it to us.</p>
+                        <p>Reference: <strong>{reference_id}</strong></p>
+                        <p>Best regards,<br>{company_name}</p>
+                    `
+                },
+                repair_status: {
+                    subject: 'Repair Status Update - {ticket_id}',
+                    body: `
+                        <h2>Repair Status Update</h2>
+                        <p>Dear {customer_name},</p>
+                        <p>Your repair ticket <strong>{ticket_id}</strong> has been updated.</p>
+                        <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>Device:</strong> {device_model}</p>
+                            <p style="margin: 10px 0 0 0;"><strong>New Status:</strong> {status}</p>
+                        </div>
+                        <p>You can track your repair status online using your ticket ID.</p>
+                        <p>Best regards,<br>{company_name}</p>
+                    `
+                },
+                ready_pickup: {
+                    subject: 'Your Device is Ready for Pickup! - {ticket_id}',
+                    body: `
+                        <h2>Ready for Pickup! 🎉</h2>
+                        <p>Dear {customer_name},</p>
+                        <p>Great news! Your <strong>{device_model}</strong> is ready for pickup.</p>
+                        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>Ticket:</strong> {ticket_id}</p>
+                            <p style="margin: 10px 0 0 0;"><strong>Store Hours:</strong> Mon-Fri 9AM-6PM, Sat 10AM-2PM</p>
+                        </div>
+                        <p>Please bring a valid ID when picking up your device.</p>
+                        <p>Best regards,<br>{company_name}</p>
+                    `
+                }
+            };
+            
+            const template = templates[templateType];
+            document.getElementById('email-preview-content').innerHTML = template.body
+                .replace(/{company_name}/g, 'Your Company')
+                .replace(/{customer_name}/g, 'John Doe')
+                .replace(/{device_model}/g, 'iPhone 14 Pro')
+                .replace(/{offer_amount}/g, '350.00')
+                .replace(/{reference_id}/g, 'TRD-0001')
+                .replace(/{ticket_id}/g, 'SRV-0001')
+                .replace(/{status}/g, 'Ready for Pickup');
+        },
+        
+        sendTestEmail() {
+            Toast.info('Test email functionality requires email service configuration');
+        }
+    };
+
+    // Update App initAfterLogin to show/hide Users nav based on role
+    const originalInitAfterLogin = App.initAfterLogin;
+    App.initAfterLogin = function() {
+        originalInitAfterLogin.call(this);
+        
+        // Check user role and show/hide Users nav
+        const userInfo = JSON.parse(sessionStorage.getItem('user_info') || '{}');
+        const usersNav = document.getElementById('nav-users');
+        
+        if (userInfo.role === 'master_admin') {
+            usersNav?.classList.remove('hidden');
+        } else {
+            usersNav?.classList.add('hidden');
+        }
+        
+        // Update sidebar user info
+        if (userInfo.name || userInfo.username) {
+            document.getElementById('sidebar-user-name').textContent = userInfo.name || userInfo.username;
+            document.getElementById('sidebar-user-role').textContent = userInfo.role === 'master_admin' ? 'Master Admin' : 'Admin';
+            document.getElementById('sidebar-user-avatar').textContent = (userInfo.name || userInfo.username).charAt(0).toUpperCase();
+        }
+        
+        // Initialize SyncManager for multi-device sync
+        SyncManager.init();
+    };
+
+    // Update App.refresh to include users view
+    const originalRefresh2 = App.refresh;
+    App.refresh = function() {
+        originalRefresh2.call(this);
+        if (this.currentView === 'users') {
+            UsersUI.render();
+        }
+        if (this.currentView === 'settings') {
+            SettingsUI.render();
+        }
     };
 
     // Initialize application when DOM is ready

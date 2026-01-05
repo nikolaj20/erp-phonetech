@@ -148,6 +148,34 @@ router.put('/users/:id', auth.authenticate, auth.requireMasterAdmin, async (req,
     }
 });
 
+// DELETE /api/auth/users/:id - Delete/deactivate user (master admin only)
+router.delete('/users/:id', auth.authenticate, auth.requireMasterAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Prevent deleting yourself
+        if (parseInt(id) === req.user.id) {
+            return res.status(400).json({ error: 'Cannot delete your own account' });
+        }
+
+        // Check if user exists
+        const user = await db.getOne('SELECT * FROM users WHERE id = $1', [id]);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Soft delete - just deactivate
+        await db.query('UPDATE users SET active = false WHERE id = $1', [id]);
+
+        await db.audit(req.user.id, 'auth', id, 'delete', `Deactivated user ${user.username}`);
+
+        res.json({ message: 'User deactivated successfully' });
+    } catch (error) {
+        console.error('Delete user error:', error);
+        res.status(500).json({ error: 'Failed to delete user' });
+    }
+});
+
 // POST /api/auth/change-password - Change own password
 router.post('/change-password', auth.authenticate, async (req, res) => {
     try {

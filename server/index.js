@@ -20,6 +20,7 @@ const ticketsRoutes = require('./routes/tickets');
 const tradeinRoutes = require('./routes/tradein');
 const financeRoutes = require('./routes/finance');
 const publicRoutes = require('./routes/public');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -83,6 +84,7 @@ app.use('/api/parts', authMiddleware.authenticate, partsRoutes);
 app.use('/api/tickets', authMiddleware.authenticate, ticketsRoutes);
 app.use('/api/tradein', authMiddleware.authenticate, tradeinRoutes);
 app.use('/api/finance', authMiddleware.authenticate, financeRoutes);
+app.use('/api/settings', authMiddleware.authenticate, settingsRoutes);
 
 // ============================================
 // PAGE ROUTES
