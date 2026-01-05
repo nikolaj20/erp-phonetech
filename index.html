@@ -968,6 +968,20 @@
                                     <!-- Timeline populated by JS -->
                                 </div>
                                 
+                                <!-- Used Parts Section -->
+                                <div class="bg-purple-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-purple-800 mb-3">Used Parts</h4>
+                                    <div id="ticket-used-parts" class="space-y-2 mb-3 max-h-32 overflow-y-auto">
+                                        <!-- Used parts populated by JS -->
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <select id="ticket-add-part" class="flex-1 px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500">
+                                            <option value="">Select part to add...</option>
+                                        </select>
+                                        <button onclick="ServiceUI.addUsedPart()" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm">Add</button>
+                                    </div>
+                                </div>
+                                
                                 <!-- Status Update -->
                                 <div class="bg-blue-50 rounded-lg p-4">
                                     <h4 class="font-semibold text-blue-800 mb-3">Update Status</h4>
@@ -4812,6 +4826,186 @@
             ServiceTicketService.addNote(this.currentTicket.id, noteText);
             document.getElementById('ticket-new-note').value = '';
             this.showTicketDetails(this.currentTicket.id);
+        },
+        
+        // Used Parts management
+        populatePartsDropdown() {
+            const select = document.getElementById('ticket-add-part');
+            if (!select) return;
+            
+            const parts = PartsInventoryService.getAll().filter(p => p.quantity > 0);
+            
+            select.innerHTML = '<option value="">Select part to add...</option>';
+            
+            if (parts.length === 0) {
+                select.innerHTML += '<option value="" disabled>No parts in stock</option>';
+                return;
+            }
+            
+            // Group parts by device
+            const grouped = {};
+            parts.forEach(part => {
+                // Try phone devices first
+                let device = PHONE_DEVICES.find(d => d.id === part.device_id);
+                let deviceName = device ? device.name : null;
+                
+                // Try console devices
+                if (!deviceName) {
+                    device = CONSOLE_DEVICES.find(d => d.id === part.device_id);
+                    deviceName = device ? `${device.brand} ${device.name}` : 'Unknown';
+                }
+                
+                if (!grouped[deviceName]) grouped[deviceName] = [];
+                
+                // Get part type name
+                let partType = IPHONE_PART_TYPES.find(pt => pt.id === part.part_type_id);
+                if (!partType) partType = CONSOLE_PART_TYPES.find(pt => pt.id === part.part_type_id);
+                const partTypeName = partType ? partType.name : part.part_type_id;
+                
+                const quality = QUALITY_TYPES.find(q => q.id === part.quality);
+                const qualityName = quality ? quality.name : part.quality;
+                
+                grouped[deviceName].push({
+                    id: part.id,
+                    name: `${partTypeName} (${qualityName}) - ${part.quantity} in stock`,
+                    sellPrice: part.sell_price
+                });
+            });
+            
+            // Build optgroups
+            for (const [deviceName, deviceParts] of Object.entries(grouped)) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = deviceName;
+                deviceParts.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = `${p.name} - ${Utils.formatCurrency(p.sellPrice)}`;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
+        },
+        
+        renderUsedParts() {
+            const container = document.getElementById('ticket-used-parts');
+            if (!container || !this.currentTicket) return;
+            
+            const usedParts = this.currentTicket.used_parts || [];
+            
+            if (usedParts.length === 0) {
+                container.innerHTML = '<p class="text-sm text-purple-600">No parts used yet</p>';
+                return;
+            }
+            
+            let totalCost = 0;
+            
+            container.innerHTML = usedParts.map(up => {
+                const part = PartsInventoryService.getById(up.part_id);
+                let partName = 'Unknown Part';
+                let deviceName = '';
+                
+                if (part) {
+                    // Get part type name
+                    let partType = IPHONE_PART_TYPES.find(pt => pt.id === part.part_type_id);
+                    if (!partType) partType = CONSOLE_PART_TYPES.find(pt => pt.id === part.part_type_id);
+                    partName = partType ? partType.name : part.part_type_id;
+                    
+                    // Get device name
+                    let device = PHONE_DEVICES.find(d => d.id === part.device_id);
+                    if (!device) device = CONSOLE_DEVICES.find(d => d.id === part.device_id);
+                    deviceName = device ? (device.brand ? `${device.brand} ${device.name}` : device.name) : '';
+                }
+                
+                totalCost += up.price || 0;
+                
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white rounded border border-purple-200">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-slate-800">${partName}</p>
+                            <p class="text-xs text-slate-500">${deviceName}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-purple-600">${Utils.formatCurrency(up.price || 0)}</span>
+                            <button onclick="ServiceUI.removeUsedPart('${up.id}')" class="text-red-500 hover:text-red-700 text-xs">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add total
+            if (usedParts.length > 0) {
+                container.innerHTML += `
+                    <div class="mt-2 pt-2 border-t border-purple-200 flex justify-between">
+                        <span class="text-sm font-semibold text-purple-800">Total Parts Cost:</span>
+                        <span class="text-sm font-bold text-purple-600">${Utils.formatCurrency(totalCost)}</span>
+                    </div>
+                `;
+            }
+        },
+        
+        addUsedPart() {
+            if (!this.currentTicket) return;
+            
+            const select = document.getElementById('ticket-add-part');
+            const partId = select.value;
+            
+            if (!partId) {
+                Toast.warning('Please select a part to add');
+                return;
+            }
+            
+            const part = PartsInventoryService.getById(partId);
+            if (!part) {
+                Toast.error('Part not found');
+                return;
+            }
+            
+            if (part.quantity <= 0) {
+                Toast.error('This part is out of stock');
+                return;
+            }
+            
+            // Add to ticket
+            ServiceTicketService.addUsedPart(this.currentTicket.id, {
+                part_id: partId,
+                price: part.sell_price
+            });
+            
+            // Decrement part inventory
+            PartsInventoryService.adjustQuantity(partId, -1);
+            
+            Toast.success('Part added to ticket');
+            
+            // Reset select
+            select.value = '';
+            
+            // Refresh display
+            this.populatePartsDropdown();
+            this.renderUsedParts();
+        },
+        
+        removeUsedPart(usedPartId) {
+            if (!this.currentTicket) return;
+            
+            const usedParts = this.currentTicket.used_parts || [];
+            const usedPart = usedParts.find(up => up.id === usedPartId);
+            
+            if (!usedPart) return;
+            
+            // Return part to inventory
+            PartsInventoryService.adjustQuantity(usedPart.part_id, 1);
+            
+            // Remove from ticket
+            ServiceTicketService.removeUsedPart(this.currentTicket.id, usedPartId);
+            
+            Toast.success('Part removed from ticket');
+            
+            // Refresh ticket data
+            this.currentTicket = ServiceTicketService.getById(this.currentTicket.id);
+            
+            // Refresh display
+            this.populatePartsDropdown();
+            this.renderUsedParts();
         },
         
         printIntakeProtocol() {
