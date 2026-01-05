@@ -3515,6 +3515,14 @@
                 { profit, warranty_months: warrantyMonths, customer }
             );
             
+            // Push sale to server for multi-device sync
+            SyncManager.pushToServer('sell', {
+                id: id,
+                sell: parseFloat(sellPrice),
+                sold_to: customer,
+                warranty_months: warrantyMonths
+            });
+            
             return this.getById(id);
         },
         
