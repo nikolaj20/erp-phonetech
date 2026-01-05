@@ -219,9 +219,33 @@
                     Trade-In Requests
                     <span id="tradein-requests-count" class="ml-auto bg-green-600 text-xs px-2 py-1 rounded-full">0</span>
                 </button>
+                
+                <!-- Users Management - Admin Only -->
+                <button onclick="App.navigate('users')" data-nav="users" id="nav-users" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all text-left hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    Users
+                    <span id="users-count" class="ml-auto bg-red-600 text-xs px-2 py-1 rounded-full">0</span>
+                </button>
             </nav>
             
-            <div class="p-4 border-t border-slate-700">
+            <div class="p-4 border-t border-slate-700 space-y-3">
+                <!-- User Info & Logout -->
+                <div class="flex items-center justify-between bg-slate-800 rounded-lg p-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold" id="sidebar-user-avatar">A</div>
+                        <div>
+                            <p class="text-sm font-medium text-white" id="sidebar-user-name">Admin</p>
+                            <p class="text-xs text-slate-400" id="sidebar-user-role">admin</p>
+                        </div>
+                    </div>
+                    <button onclick="Auth.logout()" title="Logout" class="text-slate-400 hover:text-red-400 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                    </button>
+                </div>
                 <div class="text-xs text-slate-500">
                     <p>Version 1.0.0</p>
                     <p class="mt-1">Data stored locally</p>
