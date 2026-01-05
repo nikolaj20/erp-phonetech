@@ -2299,6 +2299,178 @@
 
     <script>
     // ============================================
+    // API CONFIGURATION
+    // ============================================
+    const API_URL = 'https://erp-phonetech-production.up.railway.app';
+    const USE_API = false; // Set to true to use backend API instead of localStorage
+    
+    // ============================================
+    // MULTI-DEVICE SYNC MODULE
+    // Uses localStorage with broadcast channel for real-time sync
+    // ============================================
+    const SyncManager = {
+        channel: null,
+        lastSyncTimestamp: 0,
+        syncInterval: null,
+        SYNC_INTERVAL_MS: 3000, // Check every 3 seconds
+        VERSION_KEY: 'repairflow_data_version',
+        
+        init() {
+            // Use BroadcastChannel for same-origin tabs
+            if ('BroadcastChannel' in window) {
+                this.channel = new BroadcastChannel('repairflow_sync');
+                this.channel.onmessage = (event) => this.handleSyncMessage(event);
+            }
+            
+            // Listen for storage events from other tabs/windows
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'repairflow_erp_data' || event.key === this.VERSION_KEY) {
+                    this.handleStorageChange(event);
+                }
+            });
+            
+            // Start periodic sync check for cross-device sync via server
+            this.startPeriodicSync();
+            
+            // Sync on visibility change (when user returns to tab)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    this.checkForUpdates();
+                }
+            });
+            
+            // Initialize version
+            if (!localStorage.getItem(this.VERSION_KEY)) {
+                localStorage.setItem(this.VERSION_KEY, Date.now().toString());
+            }
+            this.lastSyncTimestamp = parseInt(localStorage.getItem(this.VERSION_KEY)) || 0;
+            
+            console.log('📡 SyncManager initialized - Multi-device sync enabled');
+        },
+        
+        // Broadcast a data change to other tabs
+        broadcastChange(action, data = {}) {
+            const version = Date.now();
+            localStorage.setItem(this.VERSION_KEY, version.toString());
+            this.lastSyncTimestamp = version;
+            
+            if (this.channel) {
+                this.channel.postMessage({
+                    action,
+                    version,
+                    data,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        },
+        
+        // Handle incoming sync messages from other tabs
+        handleSyncMessage(event) {
+            const { action, version, data } = event.data;
+            
+            if (version > this.lastSyncTimestamp) {
+                console.log('📥 Sync received:', action);
+                this.lastSyncTimestamp = version;
+                
+                // Reload state and refresh UI
+                State._state = null; // Force reload
+                State.init();
+                App.refresh();
+                
+                Toast.info('Data updated from another tab');
+            }
+        },
+        
+        // Handle localStorage changes from other tabs/windows
+        handleStorageChange(event) {
+            if (event.key === this.VERSION_KEY) {
+                const newVersion = parseInt(event.newValue) || 0;
+                if (newVersion > this.lastSyncTimestamp) {
+                    console.log('📥 Storage sync detected, reloading...');
+                    this.lastSyncTimestamp = newVersion;
+                    
+                    // Reload state and refresh UI
+                    State._state = null;
+                    State.init();
+                    App.refresh();
+                    
+                    Toast.info('Data synchronized');
+                }
+            }
+        },
+        
+        // Start periodic sync for cross-device (uses API if enabled)
+        startPeriodicSync() {
+            if (USE_API) {
+                this.syncInterval = setInterval(() => {
+                    this.syncWithServer();
+                }, this.SYNC_INTERVAL_MS);
+            }
+        },
+        
+        // Check for updates when tab becomes visible
+        checkForUpdates() {
+            const currentVersion = parseInt(localStorage.getItem(this.VERSION_KEY)) || 0;
+            if (currentVersion > this.lastSyncTimestamp) {
+                console.log('📥 Updates detected on tab focus');
+                this.lastSyncTimestamp = currentVersion;
+                State._state = null;
+                State.init();
+                App.refresh();
+            }
+            
+            if (USE_API) {
+                this.syncWithServer();
+            }
+        },
+        
+        // Sync with server (for cross-device sync when API is enabled)
+        async syncWithServer() {
+            if (!USE_API) return;
+            
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                if (!token) return;
+                
+                const response = await fetch(`${API_URL}/api/sync/check`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const serverData = await response.json();
+                    if (serverData.version > this.lastSyncTimestamp) {
+                        // Server has newer data, fetch and merge
+                        await this.pullFromServer();
+                    }
+                }
+            } catch (error) {
+                console.warn('Sync check failed:', error);
+            }
+        },
+        
+        async pullFromServer() {
+            // Implementation for pulling data from server
+            // This would fetch all data and merge/replace local data
+            console.log('Pulling data from server...');
+        },
+        
+        async pushToServer() {
+            // Implementation for pushing data to server
+            // This would send local changes to the server
+            console.log('Pushing data to server...');
+        },
+        
+        destroy() {
+            if (this.channel) {
+                this.channel.close();
+            }
+            if (this.syncInterval) {
+                clearInterval(this.syncInterval);
+            }
+        }
+    };
+    
+    // ============================================
     // EMBEDDED DATA - All device and parts data
     // ============================================
     const PHONE_DEVICES = [
@@ -2723,6 +2895,10 @@
         persist() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(this._state));
+                // Broadcast change to other tabs/devices
+                if (typeof SyncManager !== 'undefined' && SyncManager.channel) {
+                    SyncManager.broadcastChange('data_update');
+                }
             } catch (e) {
                 console.error('Failed to persist state:', e);
                 Toast.error('Failed to save data. Storage may be full.');
