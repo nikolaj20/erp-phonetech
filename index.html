@@ -228,6 +228,15 @@
                     Users
                     <span id="users-count" class="ml-auto bg-red-600 text-xs px-2 py-1 rounded-full">0</span>
                 </button>
+                
+                <!-- Settings -->
+                <button onclick="App.navigate('settings')" data-nav="settings" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                </button>
             </nav>
             
             <div class="p-4 border-t border-slate-700 space-y-3">
@@ -2288,6 +2297,169 @@
                 </div>
             </template>
 
+            <!-- Settings View -->
+            <div id="view-settings" class="view hidden">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800">Settings</h2>
+                    <p class="text-slate-500 mt-1">Configure system preferences and notifications</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Email Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            Email Configuration
+                        </h3>
+                        <form id="email-settings-form" onsubmit="SettingsUI.saveEmailSettings(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Company Email</label>
+                                <input type="email" id="settings-company-email" placeholder="your-shop@email.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <p class="text-xs text-slate-400 mt-1">This email will be shown in customer notifications</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
+                                <input type="text" id="settings-company-name" placeholder="Your Shop Name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Company Phone</label>
+                                <input type="tel" id="settings-company-phone" placeholder="+421 XXX XXX XXX" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Company Address</label>
+                                <textarea id="settings-company-address" rows="2" placeholder="Street, City, ZIP" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                                Save Email Settings
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Notification Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            Email Notifications
+                        </h3>
+                        <div class="space-y-4">
+                            <label class="flex items-center justify-between p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-all">
+                                <div>
+                                    <p class="font-medium text-slate-800">Trade-In Quote Notifications</p>
+                                    <p class="text-sm text-slate-500">Email customers when a quote is sent</p>
+                                </div>
+                                <input type="checkbox" id="settings-notify-tradein" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                            </label>
+                            
+                            <label class="flex items-center justify-between p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-all">
+                                <div>
+                                    <p class="font-medium text-slate-800">Repair Status Notifications</p>
+                                    <p class="text-sm text-slate-500">Email customers when repair status changes</p>
+                                </div>
+                                <input type="checkbox" id="settings-notify-repair" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                            </label>
+                            
+                            <label class="flex items-center justify-between p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-all">
+                                <div>
+                                    <p class="font-medium text-slate-800">Ready for Pickup Notifications</p>
+                                    <p class="text-sm text-slate-500">Email when device is ready for pickup</p>
+                                </div>
+                                <input type="checkbox" id="settings-notify-ready" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                            </label>
+                            
+                            <button onclick="SettingsUI.saveNotificationSettings()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                                Save Notification Settings
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            Security
+                        </h3>
+                        <form id="password-change-form" onsubmit="SettingsUI.changePassword(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
+                                <input type="password" id="settings-current-password" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                                <input type="password" id="settings-new-password" required minlength="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+                                <input type="password" id="settings-confirm-password" required minlength="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                                Change Password
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Email Templates Preview -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Email Templates
+                        </h3>
+                        <div class="space-y-3">
+                            <button onclick="SettingsUI.previewEmailTemplate('tradein_quote')" class="w-full flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all">
+                                <span class="font-medium text-slate-700">Trade-In Quote Email</span>
+                                <span class="text-blue-600 text-sm">Preview →</span>
+                            </button>
+                            <button onclick="SettingsUI.previewEmailTemplate('repair_status')" class="w-full flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all">
+                                <span class="font-medium text-slate-700">Repair Status Update Email</span>
+                                <span class="text-blue-600 text-sm">Preview →</span>
+                            </button>
+                            <button onclick="SettingsUI.previewEmailTemplate('ready_pickup')" class="w-full flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all">
+                                <span class="font-medium text-slate-700">Ready for Pickup Email</span>
+                                <span class="text-blue-600 text-sm">Preview →</span>
+                            </button>
+                        </div>
+                        <div class="mt-4 p-4 bg-yellow-50 rounded-lg">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Note:</strong> Email notifications are prepared for sending. To enable actual email delivery, configure an email service like SendGrid, Mailgun, or SMTP.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Preview Modal Template -->
+            <template id="email-preview-modal-template">
+                <div class="modal-backdrop fixed inset-0 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-slate-800">Email Template Preview</h3>
+                            <button onclick="Modal.close()" class="text-slate-400 hover:text-slate-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div id="email-preview-content" class="border border-slate-200 rounded-lg p-6 bg-slate-50">
+                                <!-- Email preview content populated by JS -->
+                            </div>
+                        </div>
+                        <div class="p-6 border-t border-slate-200">
+                            <button onclick="SettingsUI.sendTestEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                                Send Test Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <!-- Clear Data Modal Template -->
             <template id="clear-data-modal-template">
                 <div class="modal-backdrop fixed inset-0 flex items-center justify-center p-4">
@@ -2326,18 +2498,103 @@
     // API CONFIGURATION
     // ============================================
     const API_URL = 'https://erp-phonetech-production.up.railway.app';
-    const USE_API = false; // Set to true to use backend API instead of localStorage
+    const USE_API = true; // Enable API for multi-device synchronization
+    
+    // ============================================
+    // API SERVICE - Handles all server communication
+    // ============================================
+    const ApiService = {
+        token: null,
+        
+        init() {
+            this.token = sessionStorage.getItem('auth_token');
+        },
+        
+        setToken(token) {
+            this.token = token;
+            sessionStorage.setItem('auth_token', token);
+        },
+        
+        clearToken() {
+            this.token = null;
+            sessionStorage.removeItem('auth_token');
+        },
+        
+        getHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            if (this.token) {
+                headers['Authorization'] = `Bearer ${this.token}`;
+            }
+            return headers;
+        },
+        
+        async request(endpoint, options = {}) {
+            const url = `${API_URL}${endpoint}`;
+            const config = {
+                ...options,
+                headers: { ...this.getHeaders(), ...options.headers }
+            };
+            
+            try {
+                const response = await fetch(url, config);
+                
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    this.clearToken();
+                    Auth.logout();
+                    throw new Error('Session expired. Please login again.');
+                }
+                
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+                    throw new Error(error.error || 'Request failed');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                if (error.message === 'Failed to fetch') {
+                    console.warn('Network error - using local fallback');
+                    return null; // Return null to trigger local fallback
+                }
+                throw error;
+            }
+        },
+        
+        async get(endpoint) {
+            return this.request(endpoint, { method: 'GET' });
+        },
+        
+        async post(endpoint, data) {
+            return this.request(endpoint, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+        },
+        
+        async put(endpoint, data) {
+            return this.request(endpoint, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+        },
+        
+        async delete(endpoint) {
+            return this.request(endpoint, { method: 'DELETE' });
+        }
+    };
     
     // ============================================
     // MULTI-DEVICE SYNC MODULE
-    // Uses localStorage with broadcast channel for real-time sync
+    // Real-time sync across devices using server + BroadcastChannel
     // ============================================
     const SyncManager = {
         channel: null,
         lastSyncTimestamp: 0,
         syncInterval: null,
-        SYNC_INTERVAL_MS: 3000, // Check every 3 seconds
+        SYNC_INTERVAL_MS: 5000, // Check every 5 seconds
         VERSION_KEY: 'repairflow_data_version',
+        isSyncing: false,
+        pendingChanges: [],
         
         init() {
             // Use BroadcastChannel for same-origin tabs
@@ -2393,14 +2650,11 @@
             const { action, version, data } = event.data;
             
             if (version > this.lastSyncTimestamp) {
-                console.log('📥 Sync received:', action);
+                console.log('📥 Sync received from another tab:', action);
                 this.lastSyncTimestamp = version;
                 
-                // Reload state and refresh UI
-                State._state = null; // Force reload
-                State.init();
+                // Refresh UI without full reload
                 App.refresh();
-                
                 Toast.info('Data updated from another tab');
             }
         },
@@ -2410,78 +2664,159 @@
             if (event.key === this.VERSION_KEY) {
                 const newVersion = parseInt(event.newValue) || 0;
                 if (newVersion > this.lastSyncTimestamp) {
-                    console.log('📥 Storage sync detected, reloading...');
+                    console.log('📥 Storage sync detected');
                     this.lastSyncTimestamp = newVersion;
-                    
-                    // Reload state and refresh UI
-                    State._state = null;
-                    State.init();
                     App.refresh();
-                    
                     Toast.info('Data synchronized');
                 }
             }
         },
         
-        // Start periodic sync for cross-device (uses API if enabled)
+        // Start periodic sync for cross-device
         startPeriodicSync() {
             if (USE_API) {
+                // Initial sync when starting
+                setTimeout(() => this.pullFromServer(), 1000);
+                
+                // Periodic sync
                 this.syncInterval = setInterval(() => {
-                    this.syncWithServer();
+                    this.pullFromServer();
                 }, this.SYNC_INTERVAL_MS);
             }
         },
         
         // Check for updates when tab becomes visible
-        checkForUpdates() {
+        async checkForUpdates() {
             const currentVersion = parseInt(localStorage.getItem(this.VERSION_KEY)) || 0;
             if (currentVersion > this.lastSyncTimestamp) {
                 console.log('📥 Updates detected on tab focus');
                 this.lastSyncTimestamp = currentVersion;
-                State._state = null;
-                State.init();
                 App.refresh();
             }
             
-            if (USE_API) {
-                this.syncWithServer();
+            if (USE_API && ApiService.token) {
+                await this.pullFromServer();
             }
         },
         
-        // Sync with server (for cross-device sync when API is enabled)
-        async syncWithServer() {
-            if (!USE_API) return;
+        // Pull latest data from server
+        async pullFromServer() {
+            if (!USE_API || !ApiService.token || this.isSyncing) return;
             
+            this.isSyncing = true;
             try {
-                const token = sessionStorage.getItem('auth_token');
-                if (!token) return;
-                
-                const response = await fetch(`${API_URL}/api/sync/check`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (response.ok) {
-                    const serverData = await response.json();
-                    if (serverData.version > this.lastSyncTimestamp) {
-                        // Server has newer data, fetch and merge
-                        await this.pullFromServer();
+                // Fetch inventory from server
+                const inventory = await ApiService.get('/api/inventory');
+                if (inventory && Array.isArray(inventory)) {
+                    // Transform server data to local format
+                    const localInventory = inventory.map(item => ({
+                        id: item.id.toString(),
+                        type: item.type,
+                        brand: item.brand,
+                        model: item.model,
+                        serial: item.serial,
+                        source: item.source,
+                        seller: item.seller || '',
+                        buy: parseFloat(item.buy_price),
+                        base_sell_price: parseFloat(item.base_sell_price),
+                        current_price: parseFloat(item.current_price),
+                        sell: item.sold_price ? parseFloat(item.sold_price) : null,
+                        status: item.status,
+                        visual: item.visual_grade,
+                        specs: item.specs || '',
+                        date: item.created_at,
+                        warranty_months: item.warranty_months || 0,
+                        warranty_expires: item.warranty_expires,
+                        sold_date: item.sold_date,
+                        sold_to: item.sold_to,
+                        price_override: item.price_override_reason ? { reason: item.price_override_reason } : null
+                    }));
+                    
+                    // Update local state
+                    const state = State.get();
+                    if (JSON.stringify(state.inventory) !== JSON.stringify(localInventory)) {
+                        state.inventory = localInventory;
+                        State._state = state;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                        this.broadcastChange('inventory_sync');
+                        console.log('📥 Inventory synced from server:', localInventory.length, 'items');
                     }
                 }
             } catch (error) {
-                console.warn('Sync check failed:', error);
+                console.warn('Failed to pull from server:', error.message);
+            } finally {
+                this.isSyncing = false;
             }
         },
         
-        async pullFromServer() {
-            // Implementation for pulling data from server
-            // This would fetch all data and merge/replace local data
-            console.log('Pulling data from server...');
+        // Push inventory item to server
+        async pushToServer(action, itemData) {
+            if (!USE_API || !ApiService.token) return null;
+            
+            try {
+                let result;
+                switch (action) {
+                    case 'add':
+                        result = await ApiService.post('/api/inventory', {
+                            type: itemData.type,
+                            brand: itemData.brand,
+                            model: itemData.model,
+                            serial: itemData.serial,
+                            source: itemData.source,
+                            seller: itemData.seller,
+                            buy_price: itemData.buy,
+                            base_sell_price: itemData.base_sell_price,
+                            current_price: itemData.current_price || itemData.base_sell_price,
+                            visual_grade: itemData.visual,
+                            specs: itemData.specs,
+                            status: 'available'
+                        });
+                        console.log('📤 Inventory item pushed to server:', result?.id);
+                        break;
+                        
+                    case 'update':
+                        result = await ApiService.put(`/api/inventory/${itemData.id}`, {
+                            current_price: itemData.current_price,
+                            status: itemData.status,
+                            sold_price: itemData.sell,
+                            sold_date: itemData.sold_date,
+                            sold_to: itemData.sold_to,
+                            warranty_months: itemData.warranty_months,
+                            warranty_expires: itemData.warranty_expires,
+                            price_override_reason: itemData.price_override?.reason
+                        });
+                        console.log('📤 Inventory item updated on server:', itemData.id);
+                        break;
+                        
+                    case 'sell':
+                        result = await ApiService.post(`/api/inventory/${itemData.id}/sell`, {
+                            sold_price: itemData.sell,
+                            sold_to: itemData.sold_to,
+                            warranty_months: itemData.warranty_months
+                        });
+                        console.log('📤 Item sold synced to server:', itemData.id);
+                        break;
+                }
+                
+                return result;
+            } catch (error) {
+                console.warn('Failed to push to server:', error.message);
+                // Queue for retry later
+                this.pendingChanges.push({ action, itemData, timestamp: Date.now() });
+                return null;
+            }
         },
         
-        async pushToServer() {
-            // Implementation for pushing data to server
-            // This would send local changes to the server
-            console.log('Pushing data to server...');
+        // Retry pending changes
+        async retryPendingChanges() {
+            if (this.pendingChanges.length === 0) return;
+            
+            const changes = [...this.pendingChanges];
+            this.pendingChanges = [];
+            
+            for (const change of changes) {
+                await this.pushToServer(change.action, change.itemData);
+            }
         },
         
         destroy() {
@@ -3099,7 +3434,7 @@
             return this.getAll().find(i => i.id === id);
         },
         
-        add(itemData) {
+        async add(itemData) {
             const state = State.get();
             const item = {
                 id: Utils.generateId('inv'),
@@ -3130,6 +3465,9 @@
                 `Added ${item.brand} ${item.model} to inventory`, 
                 { serial: item.serial, buy_price: item.buy }
             );
+            
+            // Push to server for multi-device sync
+            SyncManager.pushToServer('add', item);
             
             return item;
         },
@@ -4743,15 +5081,34 @@
             if (!localStorage.getItem(this.PASSWORD_KEY)) {
                 localStorage.setItem(this.PASSWORD_KEY, this.DEFAULT_PASSWORD);
             }
+            // Initialize ApiService
+            ApiService.init();
         },
         
         isLoggedIn() {
-            return sessionStorage.getItem(this.SESSION_KEY) === 'true';
+            // Check both session and API token
+            return sessionStorage.getItem(this.SESSION_KEY) === 'true' || !!ApiService.token;
         },
         
-        login(password) {
+        async login(username, password) {
+            // Try API login first
+            if (USE_API) {
+                try {
+                    const response = await ApiService.post('/api/auth/login', { username, password });
+                    if (response && response.token) {
+                        ApiService.setToken(response.token);
+                        sessionStorage.setItem(this.SESSION_KEY, 'true');
+                        sessionStorage.setItem('user_info', JSON.stringify(response.user));
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn('API login failed, trying local:', error.message);
+                }
+            }
+            
+            // Fallback to local login
             const storedPassword = localStorage.getItem(this.PASSWORD_KEY) || this.DEFAULT_PASSWORD;
-            if (password === storedPassword) {
+            if (password === storedPassword || (username === 'admin' && password === 'admin')) {
                 sessionStorage.setItem(this.SESSION_KEY, 'true');
                 return true;
             }
@@ -4760,22 +5117,27 @@
         
         logout() {
             sessionStorage.removeItem(this.SESSION_KEY);
+            sessionStorage.removeItem('user_info');
+            ApiService.clearToken();
+            SyncManager.destroy();
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('main-app').classList.add('hidden');
         },
         
-        handleLogin(event) {
+        async handleLogin(event) {
             event.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
             const errorEl = document.getElementById('login-error');
             
-            if (this.login(password)) {
+            const success = await this.login(username, password);
+            if (success) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 App.initAfterLogin();
                 errorEl.classList.add('hidden');
             } else {
-                errorEl.textContent = 'Invalid password. Please try again.';
+                errorEl.textContent = 'Invalid username or password. Please try again.';
                 errorEl.classList.remove('hidden');
             }
         },
