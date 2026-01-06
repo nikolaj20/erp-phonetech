@@ -157,4 +157,94 @@ router.post('/:id/notes', async (req, res) => {
     }
 });
 
+// GET /api/tickets/:id/parts - Get used parts for a ticket
+router.get('/:id/parts', async (req, res) => {
+    try {
+        const parts = await db.getAll(`
+            SELECT tup.*, p.device_id, p.part_type_id, p.quality, p.color
+            FROM ticket_used_parts tup
+            JOIN parts p ON tup.part_id = p.id
+            WHERE tup.ticket_id = $1
+            ORDER BY tup.created_at DESC
+        `, [req.params.id]);
+        res.json(parts);
+    } catch (error) {
+        console.error('Error fetching ticket parts:', error);
+        res.status(500).json({ error: 'Failed to fetch ticket parts' });
+    }
+});
+
+// POST /api/tickets/:id/parts - Add part to ticket
+router.post('/:id/parts', async (req, res) => {
+    try {
+        const { part_id, price, quantity } = req.body;
+        const ticketId = req.params.id;
+        const qty = quantity || 1;
+        
+        // Check ticket exists
+        const ticket = await db.getOne('SELECT * FROM tickets WHERE id = $1', [ticketId]);
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        
+        // Check part exists and has stock
+        const part = await db.getOne('SELECT * FROM parts WHERE id = $1', [part_id]);
+        if (!part) {
+            return res.status(404).json({ error: 'Part not found' });
+        }
+        if (part.quantity < qty) {
+            return res.status(400).json({ error: 'Not enough parts in stock' });
+        }
+        
+        // Add to ticket_used_parts
+        const usedPart = await db.insert(`
+            INSERT INTO ticket_used_parts (ticket_id, part_id, quantity, price, created_by)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `, [ticketId, part_id, qty, price || part.sell_price, req.user.id]);
+        
+        // Decrement part inventory
+        await db.query('UPDATE parts SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [qty, part_id]);
+        
+        // Update ticket timestamp
+        await db.query('UPDATE tickets SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [ticketId]);
+        
+        await db.audit(req.user.id, 'service', ticketId, 'update', `Added part #${part_id} to ticket`);
+        
+        res.status(201).json(usedPart);
+    } catch (error) {
+        console.error('Error adding part to ticket:', error);
+        res.status(500).json({ error: 'Failed to add part to ticket' });
+    }
+});
+
+// DELETE /api/tickets/:id/parts/:usedPartId - Remove part from ticket
+router.delete('/:id/parts/:usedPartId', async (req, res) => {
+    try {
+        const { id: ticketId, usedPartId } = req.params;
+        
+        // Get the used part record
+        const usedPart = await db.getOne('SELECT * FROM ticket_used_parts WHERE id = $1 AND ticket_id = $2', [usedPartId, ticketId]);
+        if (!usedPart) {
+            return res.status(404).json({ error: 'Used part record not found' });
+        }
+        
+        // Return part to inventory
+        await db.query('UPDATE parts SET quantity = quantity + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [usedPart.quantity, usedPart.part_id]);
+        
+        // Delete the used part record
+        await db.query('DELETE FROM ticket_used_parts WHERE id = $1', [usedPartId]);
+        
+        // Update ticket timestamp
+        await db.query('UPDATE tickets SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [ticketId]);
+        
+        await db.audit(req.user.id, 'service', ticketId, 'update', `Removed part from ticket`);
+        
+        res.json({ message: 'Part removed from ticket' });
+    } catch (error) {
+        console.error('Error removing part from ticket:', error);
+        res.status(500).json({ error: 'Failed to remove part from ticket' });
+    }
+});
+
 module.exports = router;

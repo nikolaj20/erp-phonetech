@@ -264,6 +264,39 @@
                     <p class="text-slate-500 mt-1">Overview of your repair and resell business</p>
                 </div>
                 
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-8">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-slate-800">Quick Actions</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="App.navigate('service'); setTimeout(() => ServiceUI.showNewTicketModal(), 100)" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                New Ticket
+                            </button>
+                            <button onclick="App.navigate('trade')" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Item
+                            </button>
+                            <button onclick="App.navigate('parts-inventory'); setTimeout(() => PartsInventoryUI.showAddStockModal(), 100)" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                </svg>
+                                Add Parts
+                            </button>
+                            <button onclick="DashboardUI.exportDashboardReport()" class="bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Export Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- KPI Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition-all">
@@ -2582,7 +2615,8 @@
     // ============================================
     // API CONFIGURATION
     // ============================================
-    const API_URL = 'https://erp-phonetech-production.up.railway.app';
+    // Use relative URLs since frontend is served from same server
+    const API_URL = '';
     const USE_API = true; // Enable API for multi-device synchronization
     
     // ============================================
@@ -3505,10 +3539,14 @@
 
     // ============================================
     // INVENTORY SERVICE
+    // Database-first approach for multi-device sync
     // ============================================
     const InventoryService = {
+        _localCache: [], // Local cache, updated from server
+        
         getAll() {
-            return State.get().inventory;
+            // Return cached data (synced from server)
+            return this._localCache.length > 0 ? this._localCache : (State.get().inventory || []);
         },
         
         getAvailable() {
@@ -3516,10 +3554,88 @@
         },
         
         getById(id) {
-            return this.getAll().find(i => i.id === id);
+            return this.getAll().find(i => i.id === id || i.id === parseInt(id));
+        },
+        
+        // Refresh inventory from database (called on page load and periodically)
+        async refreshFromDatabase() {
+            if (!USE_API || !ApiService.token) {
+                console.log('📦 Using local storage (no API connection)');
+                this._localCache = State.get().inventory || [];
+                return this._localCache;
+            }
+            
+            try {
+                const serverItems = await ApiService.get('/api/inventory');
+                if (serverItems && Array.isArray(serverItems)) {
+                    // Transform server data to local format
+                    this._localCache = serverItems.map(item => ({
+                        id: item.id.toString(),
+                        type: item.type,
+                        brand: item.brand,
+                        model: item.model,
+                        serial: item.serial,
+                        source: item.source,
+                        seller: item.seller || '',
+                        buy: parseFloat(item.buy_price),
+                        base_sell_price: parseFloat(item.base_sell_price),
+                        current_price: parseFloat(item.current_price),
+                        sell: item.sold_price ? parseFloat(item.sold_price) : null,
+                        status: item.status,
+                        visual: item.visual_grade,
+                        specs: item.specs || '',
+                        date: item.created_at,
+                        warranty_months: item.warranty_months || 0,
+                        warranty_expires: item.warranty_expires,
+                        sold_date: item.sold_date,
+                        sold_to: item.sold_to,
+                        price_override: item.price_override_reason ? { reason: item.price_override_reason } : null
+                    }));
+                    
+                    // Update local state as backup
+                    State.update({ inventory: this._localCache });
+                    console.log('📥 Inventory refreshed from database:', this._localCache.length, 'items');
+                    return this._localCache;
+                }
+            } catch (error) {
+                console.warn('Failed to refresh from database:', error.message);
+                this._localCache = State.get().inventory || [];
+            }
+            return this._localCache;
         },
         
         async add(itemData) {
+            // DATABASE FIRST: Save to server, then update local cache
+            if (USE_API && ApiService.token) {
+                try {
+                    const serverItem = await ApiService.post('/api/inventory', {
+                        type: itemData.type,
+                        brand: itemData.brand,
+                        model: itemData.model,
+                        serial: itemData.serial,
+                        source: itemData.source,
+                        seller: itemData.seller || '',
+                        buy_price: parseFloat(itemData.buy),
+                        base_sell_price: parseFloat(itemData.base_sell_price),
+                        visual_grade: itemData.visual,
+                        specs: itemData.specs || ''
+                    });
+                    
+                    if (serverItem && serverItem.id) {
+                        console.log('📤 Item saved to database:', serverItem.id);
+                        // Refresh from server to get the new item
+                        await this.refreshFromDatabase();
+                        SyncManager.broadcastChange('inventory_add');
+                        return this.getById(serverItem.id);
+                    }
+                } catch (error) {
+                    console.error('Failed to save to database:', error.message);
+                    Toast.error('Failed to save to database: ' + error.message);
+                    throw error;
+                }
+            }
+            
+            // Fallback to local storage if no API
             const state = State.get();
             const item = {
                 id: Utils.generateId('inv'),
@@ -3545,37 +3661,75 @@
             
             const inventory = [...state.inventory, item];
             State.update({ inventory });
+            this._localCache = inventory;
             
             AuditService.log('inventory', item.id, 'create', 
                 `Added ${item.brand} ${item.model} to inventory`, 
                 { serial: item.serial, buy_price: item.buy }
             );
             
-            // Push to server for multi-device sync
-            SyncManager.pushToServer('add', item);
-            
             return item;
         },
         
-        update(id, changes) {
+        async update(id, changes) {
+            // DATABASE FIRST: Update on server, then refresh local cache
+            if (USE_API && ApiService.token) {
+                try {
+                    await ApiService.put(`/api/inventory/${id}`, {
+                        current_price: changes.current_price,
+                        status: changes.status,
+                        specs: changes.specs,
+                        price_override_reason: changes.price_override?.reason
+                    });
+                    console.log('📤 Item updated in database:', id);
+                    await this.refreshFromDatabase();
+                    SyncManager.broadcastChange('inventory_update');
+                    return this.getById(id);
+                } catch (error) {
+                    console.error('Failed to update in database:', error.message);
+                }
+            }
+            
+            // Fallback to local
             const state = State.get();
             const inventory = state.inventory.map(item => 
-                item.id === id ? { ...item, ...changes } : item
+                (item.id === id || item.id === parseInt(id)) ? { ...item, ...changes } : item
             );
             State.update({ inventory });
+            this._localCache = inventory;
             
             return this.getById(id);
         },
         
-        sell(id, sellPrice, warrantyMonths, customer = '') {
+        async sell(id, sellPrice, warrantyMonths, customer = '') {
             const item = this.getById(id);
             if (!item || item.status !== 'available') return null;
             
+            // DATABASE FIRST: Sell on server
+            if (USE_API && ApiService.token) {
+                try {
+                    await ApiService.post(`/api/inventory/${id}/sell`, {
+                        sell_price: parseFloat(sellPrice),
+                        warranty_months: warrantyMonths,
+                        customer: customer
+                    });
+                    console.log('📤 Sale recorded in database:', id);
+                    await this.refreshFromDatabase();
+                    SyncManager.broadcastChange('inventory_sell');
+                    return this.getById(id);
+                } catch (error) {
+                    console.error('Failed to record sale in database:', error.message);
+                    Toast.error('Failed to record sale: ' + error.message);
+                    throw error;
+                }
+            }
+            
+            // Fallback to local
             const warrantyExpires = warrantyMonths > 0 
                 ? new Date(Date.now() + warrantyMonths * 30 * 24 * 60 * 60 * 1000).toISOString()
                 : null;
             
-            this.update(id, {
+            await this.update(id, {
                 status: 'sold',
                 sell: parseFloat(sellPrice),
                 warranty_months: warrantyMonths,
@@ -3586,7 +3740,7 @@
             
             const profit = parseFloat(sellPrice) - item.buy;
             
-            // Create transaction
+            // Create transaction locally
             TransactionService.add({
                 type: 'SELL',
                 amount: parseFloat(sellPrice),
@@ -3599,14 +3753,6 @@
                 `Sold ${item.brand} ${item.model} for ${Utils.formatCurrency(sellPrice)}`,
                 { profit, warranty_months: warrantyMonths, customer }
             );
-            
-            // Push sale to server for multi-device sync
-            SyncManager.pushToServer('sell', {
-                id: id,
-                sell: parseFloat(sellPrice),
-                sold_to: customer,
-                warranty_months: warrantyMonths
-            });
             
             return this.getById(id);
         },
@@ -4317,6 +4463,69 @@
             this.renderRecentRepairActivity();
         },
         
+        // Export dashboard report as CSV
+        exportDashboardReport() {
+            const stats = TransactionService.getStats();
+            const aging = InventoryService.getAgingStats();
+            const period = TransactionService.getRevenueByPeriod();
+            const available = InventoryService.getAvailable();
+            const tickets = ServiceTicketService.getAll();
+            
+            // Create CSV content
+            let csv = 'RepairFlow ERP - Dashboard Report\n';
+            csv += `Generated: ${new Date().toLocaleString()}\n\n`;
+            
+            // Summary Section
+            csv += '=== FINANCIAL SUMMARY ===\n';
+            csv += `Total Revenue,${stats.totalRevenue.toFixed(2)}\n`;
+            csv += `Total Profit,${stats.totalProfit.toFixed(2)}\n`;
+            csv += `Profit Margin,${stats.margin.toFixed(1)}%\n`;
+            csv += `Inventory Value,${InventoryService.getTotalValue().toFixed(2)}\n`;
+            csv += `Items Sold,${stats.salesCount}\n`;
+            csv += `Items Purchased,${stats.purchasesCount}\n\n`;
+            
+            // Revenue by Period
+            csv += '=== REVENUE BY PERIOD ===\n';
+            csv += `Today,${period.today.toFixed(2)}\n`;
+            csv += `This Week,${period.week.toFixed(2)}\n`;
+            csv += `This Month,${period.month.toFixed(2)}\n`;
+            csv += `This Year,${period.year.toFixed(2)}\n\n`;
+            
+            // Inventory Aging
+            csv += '=== INVENTORY AGING ===\n';
+            csv += `Fresh (0-30 days),${aging.fresh}\n`;
+            csv += `Slow (31-60 days),${aging.slow}\n`;
+            csv += `Dead (60+ days),${aging.dead}\n`;
+            csv += `Total Available,${available.length}\n\n`;
+            
+            // Service Tickets Summary
+            const statusCounts = ServiceTicketService.getStatusCounts();
+            csv += '=== SERVICE TICKETS ===\n';
+            SERVICE_STATUSES.forEach(s => {
+                csv += `${s.label},${statusCounts[s.key] || 0}\n`;
+            });
+            csv += `Total Tickets,${tickets.length}\n\n`;
+            
+            // Inventory List
+            csv += '=== INVENTORY LIST ===\n';
+            csv += 'Brand,Model,Serial,Grade,Status,Age (days),Buy Price,Current Price\n';
+            InventoryService.getAll().forEach(item => {
+                const days = Utils.daysBetween(item.date);
+                csv += `${item.brand},${item.model},${item.serial},${item.visual},${item.status},${days},${item.buy.toFixed(2)},${item.current_price.toFixed(2)}\n`;
+            });
+            
+            // Download the CSV
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `repairflow-report-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            Toast.success('Dashboard report exported successfully');
+        },
+        
         renderRecentRepairActivity() {
             const tbody = document.getElementById('dashboard-repair-activity');
             const tickets = ServiceTicketService.getAll();
@@ -4807,6 +5016,10 @@
                 const disabled = !isNext && !isScrapped;
                 return `<button onclick="ServiceUI.updateStatus('${s.key}')" ${disabled ? 'disabled' : ''} class="py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : isNext ? 'bg-blue-600 text-white hover:bg-blue-700' : isScrapped ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-slate-100 text-slate-600'}">${s.label}</button>`;
             }).join('');
+            
+            // Populate parts dropdown and render used parts
+            this.populatePartsDropdown();
+            this.renderUsedParts();
         },
         
         updateStatus(newStatus) {
@@ -7151,10 +7364,10 @@
 
     // Update App initAfterLogin to show/hide Users nav based on role
     const originalInitAfterLogin = App.initAfterLogin;
-    App.initAfterLogin = function() {
+    App.initAfterLogin = async function() {
         originalInitAfterLogin.call(this);
         
-        // Check user role and show/hide Users nav
+        // Check user role and show/hide Users nav based on role
         const userInfo = JSON.parse(sessionStorage.getItem('user_info') || '{}');
         const usersNav = document.getElementById('nav-users');
         
@@ -7173,6 +7386,11 @@
         
         // Initialize SyncManager for multi-device sync
         SyncManager.init();
+        
+        // DATABASE FIRST: Load inventory from database on startup
+        console.log('🔄 Loading inventory from database...');
+        await InventoryService.refreshFromDatabase();
+        App.refresh();
     };
 
     // Update App.refresh to include users view

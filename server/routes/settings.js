@@ -8,7 +8,8 @@ const db = require('../db');
 const auth = require('../auth');
 
 // GET /api/settings - Get all settings
-router.get('/', auth.authenticate, async (req, res) => {
+// Note: auth.authenticate is already applied at app.use level in index.js
+router.get('/', async (req, res) => {
     try {
         const settings = await db.getAll('SELECT key, value, updated_at FROM settings');
         
@@ -30,7 +31,7 @@ router.get('/', auth.authenticate, async (req, res) => {
 });
 
 // GET /api/settings/:key - Get specific setting
-router.get('/:key', auth.authenticate, async (req, res) => {
+router.get('/:key', async (req, res) => {
     try {
         const { key } = req.params;
         const setting = await db.getOne('SELECT value FROM settings WHERE key = $1', [key]);
@@ -50,7 +51,7 @@ router.get('/:key', auth.authenticate, async (req, res) => {
 });
 
 // PUT /api/settings - Update multiple settings (admin only)
-router.put('/', auth.authenticate, auth.requireAdmin, async (req, res) => {
+router.put('/', auth.requireAdmin, async (req, res) => {
     try {
         const settings = req.body;
         
@@ -77,7 +78,7 @@ router.put('/', auth.authenticate, auth.requireAdmin, async (req, res) => {
 });
 
 // PUT /api/settings/:key - Update single setting (admin only)
-router.put('/:key', auth.authenticate, auth.requireAdmin, async (req, res) => {
+router.put('/:key', auth.requireAdmin, async (req, res) => {
     try {
         const { key } = req.params;
         const { value } = req.body;
@@ -102,7 +103,7 @@ router.put('/:key', auth.authenticate, auth.requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/settings/:key - Delete setting (master admin only)
-router.delete('/:key', auth.authenticate, auth.requireMasterAdmin, async (req, res) => {
+router.delete('/:key', auth.requireMasterAdmin, async (req, res) => {
     try {
         const { key } = req.params;
         
@@ -117,7 +118,7 @@ router.delete('/:key', auth.authenticate, auth.requireMasterAdmin, async (req, r
 });
 
 // POST /api/settings/initialize - Initialize default settings
-router.post('/initialize', auth.authenticate, auth.requireAdmin, async (req, res) => {
+router.post('/initialize', auth.requireAdmin, async (req, res) => {
     try {
         const defaults = {
             company_name: 'PhoneTech.sk',

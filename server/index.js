@@ -65,8 +65,8 @@ app.use('/api/auth/login', loginLimiter);
 // STATIC FILES
 // ============================================
 
-// Serve static files from public folder
-app.use(express.static(path.join(__dirname, '../public')));
+// Serve static files from server folder (where admin.html is)
+app.use(express.static(path.join(__dirname)));
 
 // ============================================
 // API ROUTES
@@ -90,32 +90,33 @@ app.use('/api/settings', authMiddleware.authenticate, settingsRoutes);
 // PAGE ROUTES
 // ============================================
 
-// Public pages
+// Public pages - serve tracking page
 app.get('/track', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/track.html'));
+    res.sendFile(path.join(__dirname, 'track.html'));
 });
 
+// Public trade-in form
 app.get('/trade-in', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/trade-in.html'));
+    res.sendFile(path.join(__dirname, 'trade-in.html'));
 });
 
 // Login page
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/login.html'));
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Admin panel (main app)
+// Admin panel (main app) - serves admin.html
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin.html'));
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 app.get('/admin/*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin.html'));
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Root - landing page
+// Root - serve admin panel directly for now
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // ============================================

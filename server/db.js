@@ -108,6 +108,17 @@ CREATE TABLE IF NOT EXISTS ticket_notes (
     created_by INTEGER REFERENCES users(id)
 );
 
+-- Ticket used parts
+CREATE TABLE IF NOT EXISTS ticket_used_parts (
+    id SERIAL PRIMARY KEY,
+    ticket_id VARCHAR(20) REFERENCES tickets(id),
+    part_id INTEGER REFERENCES parts(id),
+    quantity INTEGER DEFAULT 1,
+    price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES users(id)
+);
+
 -- Trade-in requests table
 CREATE TABLE IF NOT EXISTS tradein_requests (
     id VARCHAR(20) PRIMARY KEY,
