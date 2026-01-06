@@ -9,8 +9,15 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 
+const fs = require('fs');
 const db = require('./db');
 const authMiddleware = require('./auth');
+
+// Determine which admin file to serve (minified in production)
+const isProduction = process.env.NODE_ENV === 'production';
+const adminFile = isProduction && fs.existsSync(path.join(__dirname, 'admin.min.html')) 
+    ? 'admin.min.html' 
+    : 'admin.html';
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -105,18 +112,18 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Admin panel (main app) - serves admin.html
+// Admin panel (main app) - serves admin.html (or minified version in production)
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
+    res.sendFile(path.join(__dirname, adminFile));
 });
 
 app.get('/admin/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
+    res.sendFile(path.join(__dirname, adminFile));
 });
 
 // Root - serve admin panel directly for now
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
+    res.sendFile(path.join(__dirname, adminFile));
 });
 
 // ============================================
@@ -152,6 +159,8 @@ async function startServer() {
 ╔═══════════════════════════════════════════════════╗
 ║     PhoneTech.sk ERP Server                       ║
 ║     Running on http://localhost:${PORT}              ║
+║     Mode: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}                           ║
+║     Serving: ${adminFile}                      ║
 ╠═══════════════════════════════════════════════════╣
 ║  Public pages:                                    ║
 ║    /           - Landing page                     ║
