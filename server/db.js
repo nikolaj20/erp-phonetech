@@ -5,10 +5,17 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
+// Check for DATABASE_URL
+if (!process.env.DATABASE_URL) {
+    console.error('❌ DATABASE_URL environment variable is not set!');
+    console.error('Please configure DATABASE_URL in Railway Variables tab');
+    console.error('Format: postgres://user:password@host:port/database');
+}
+
 // Database connection pool
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/phonetech',
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 // ============================================
