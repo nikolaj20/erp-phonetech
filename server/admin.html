@@ -5577,7 +5577,7 @@
         },
         
         async login(username, password) {
-            // Try API login first
+            // API login is REQUIRED when USE_API is true - no local fallback allowed
             if (USE_API) {
                 try {
                     const response = await ApiService.post('/api/auth/login', { username, password });
@@ -5587,16 +5587,26 @@
                         sessionStorage.setItem('user_info', JSON.stringify(response.user));
                         return true;
                     }
+                    // Response was null or no token - authentication failed
+                    console.error('API login failed: No valid response');
+                    return false;
                 } catch (error) {
-                    console.warn('API login failed, trying local:', error.message);
+                    console.error('API login failed:', error.message);
+                    // When USE_API is enabled, require server authentication - no local fallback
+                    return false;
                 }
             }
             
-            // Fallback to local login
-            const storedPassword = localStorage.getItem(this.PASSWORD_KEY) || this.DEFAULT_PASSWORD;
-            if (password === storedPassword || (username === 'admin' && password === 'admin')) {
-                sessionStorage.setItem(this.SESSION_KEY, 'true');
-                return true;
+            // Local fallback ONLY when USE_API is explicitly disabled
+            // This should only be used for development/testing without a server
+            if (!USE_API) {
+                const storedPassword = localStorage.getItem(this.PASSWORD_KEY) || this.DEFAULT_PASSWORD;
+                // Require EXACT match of both username AND password
+                if (username === 'admin' && password === storedPassword) {
+                    sessionStorage.setItem(this.SESSION_KEY, 'true');
+                    sessionStorage.setItem('user_info', JSON.stringify({ id: 'local-admin', username: 'admin', name: 'Local Admin', role: 'admin' }));
+                    return true;
+                }
             }
             return false;
         },
